@@ -19,7 +19,7 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
    For example: 
 
     (a) on bcs.cosmology.uiuc.edu:
-        setenv JAVA_HOME /usr/java/jdk1.5.0_11
+        setenv JAVA_HOME /usr/local/java/jdk1.5.0_11
 
     (b) on my Mac OSX laptop:
         setenv JAVA_HOME /System/Library/Frameworks/JavaVM.framework/Versions/1.5/Home
@@ -30,7 +30,7 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
 
 
 4. Source the setup script:
-       source bin/setup.csh
+       csh:  source bin/setup.csh
        bash: source bin/setup.bash
  
 
