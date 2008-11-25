@@ -6,11 +6,12 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
    For example:
 
     (a) on bcs.cosmology.uiuc.edu: 
-        setenv DESGCM_HOME /home/dtucker/pipeline/trunk/development/GCM
+        csh:  setenv DESGCM_HOME /home/dtucker/GCM/trunk
+        bash: export DESGCM_HOME=/home/dtucker/GCM/trunk
 
     (b) on my Mac OSX laptop:
-        setenv DESGCM_HOME /Users/dtucker/DESDM/pipeline/trunk/development/GCM
-
+        csh:  setenv DESGCM /Users/dtucker/DESDM/GCM/trunk
+        bash: export DESGCM_HOME=/Users/dtucker/DESDM/GCM/trunk
 
 2. Set the JAVA_HOME environment variable to the top level 
    directory of java jdk.
@@ -28,8 +29,9 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
        cd $DESGCM_HOME
 
 
-4. Source the setup script (currently, csh only):
+4. Source the setup script:
        source bin/setup.csh
+       bash: source bin/setup.bash
  
 
 5. Change to the directory in which you will run the GCM.
@@ -40,7 +42,7 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
         cd /home/dtucker/GCMTests
 
     (b) on my Mac OSX laptop: 
-        cd /Users/dtucker/Desktop/DESDMtests/GCMtests/Current
+        cd /Users/dtucker/DESDM/DESDMtests/GCMtests/DC4
 
 
 7. Create a file of unique star matches from the region-to-region overlaps
@@ -50,7 +52,7 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
    (replacing "XXXXXXX" and "YYYYYYY" respectively with a correct DES DB username and 
     password):
 
-   java gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverPrepRun jdbc:oracle:thin:@charon.ncsa.uiuc.edu:1521: des XXXXXXX YYYYYYY g 15.0 18.0 coadd "DES%" "DES20070814" GlobalZPSolverPrepGSNlite.txt > ./GlobalZPSolverPrepGSNlite.log &
+   java gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverPrepRun jdbc:oracle:thin:@charon.ncsa.uiuc.edu:1521: des XXXXXXX YYYYYYY g 15.0 18.0 coadd "DES%" "DES20070814" GlobalZPSolverPrepGSNlite.txt DES > ./GlobalZPSolverPrepGSNlite.log &
 
    tail -f output.descoadd.20070814.log   [ctrl-c to escape]
 
@@ -73,7 +75,7 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
 
    Likewise, to create this file for the BCS coadd data from October 10, 2007:
 
-   java gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverPrepRun jdbc:oracle:thin:@charon.ncsa.uiuc.edu:1521: des XXXXXXX YYYYYYY g 15.0 18.0 coadd "BCS%" "BCS20071001" GlobalZPSolverPrepBCS20071001.txt > ./GlobalZPSolverPrepBCS20071001.log &
+   java gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverPrepRun jdbc:oracle:thin:@charon.ncsa.uiuc.edu:1521: des XXXXXXX YYYYYYY g 15.0 18.0 coadd "BCS%" "BCS20071001" GlobalZPSolverPrepBCS20071001.txt BCS > ./GlobalZPSolverPrepBCS20071001.log &
 
 
    For comparison, versions of GlobalZPSolverPrepGSNlite.txt and 
