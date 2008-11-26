@@ -101,10 +101,17 @@ public class GlobalZPSolverPrepDC4 {
 		//String query0 = "SELECT DISTINCT ID, RA, DEC, EQUINOX, TILENAME FROM image WHERE imagetype='" + imageType + "' AND " +
 		//		"band='" + filter + "' AND imagename like '" + imageNameFilter + "' AND " +
 		//		"run like '" + run + "' AND project='" + project + "' AND (RA BETWEEN 330 AND 370.) ORDER BY id";
-		String query0 = "SELECT * FROM image WHERE imagetype='" + imageType + "' AND " +
-			"band like'" + filter + "' AND imagename like '" + imageNameFilter + "' AND " +
-			"run like '" + run + "' AND project='" + project + "' AND (RA BETWEEN 330 AND 370.) ORDER BY id";
+		String query0;
+		if (project=="BCS") {
+			query0 = "SELECT * FROM image WHERE imagetype='" + imageType + "' AND " +
+				"band like'" + filter + "' AND imagename like '" + imageNameFilter + "' AND " +
+				"run like '" + run + "' AND project='" + project + "' AND (RA BETWEEN 330 AND 370.) ORDER BY id";
 ///RA BETWEEN 50 AND 100.)
+		} else {
+			query0 = "SELECT * FROM image WHERE imagetype='" + imageType + "' AND " +
+				"band like'" + filter + "' AND imagename like '" + imageNameFilter + "' AND " +
+				"run like '" + run + "' AND project='" + project + "' ORDER BY id";
+		}
 		
 		if (verbose > 0) {
 			System.out.println("query0 = " + query0);
