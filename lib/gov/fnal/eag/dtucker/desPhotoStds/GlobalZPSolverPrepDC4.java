@@ -43,9 +43,15 @@ public class GlobalZPSolverPrepDC4 {
 	private String imageNameFilter = "DES%";
 	private String run = "%";
 	private String project = "DES";
+	private double raMin  =   0.00;
+	private double raMax  = 360.00;
+	private double decMin = -90.00;
+	private double decMax =  90.00;
+	private double sepTolerDeg = 1.5;
 
-	// General instance variables...
-	private String[] filterList = { "u", "g", "r", "i", "z" };
+	// General instance variables... 
+	private String[] filterList = { "u", "g", "r", "i", "z", "Y"};   // valid filters
+	private String[] imageTypeList = {"coadd", "red", "remap"};      // valid image types
 	private int verbose = 1;
 
 	public void solve() throws Exception {
@@ -58,6 +64,26 @@ public class GlobalZPSolverPrepDC4 {
 			System.out.println("");
 		}
 
+		// sanity check:  test for valid imageType...
+		int imageTypeFlag = 0;
+		for (int j = 0; j < imageTypeList.length; j++) {
+			if (imageType.equals(imageTypeList[j])) {
+				imageTypeFlag = 1;
+				break;
+			}
+		}
+		if (imageTypeFlag != 1) {
+			System.out.println("Invalid imageType index.");
+			System.out.print("Valid imageTypes are:  ");
+			for (int j = 0; j < imageTypeList.length; j++) {
+				System.out.print(imageTypeList[j] + " ");
+			}
+			System.out.println("");
+			System.out.println("Throwing Exception!");
+			System.out.println("");
+			throw new Exception();
+		}
+		
 		int filterIndex = -1;
 		for (int j = 0; j < filterList.length; j++) {
 			if (filter.equals(filterList[j])) {
@@ -70,12 +96,24 @@ public class GlobalZPSolverPrepDC4 {
 					+ filterIndex + ".");
 			System.out.println("");
 		}
-		//if (filterIndex < 0) {
-		//	System.out
-		//			.println("Incompatible filter index.  Throwing Exception!");
-		//	System.out.println("");
-		//	throw new Exception();
-		//}
+		// temporarily skip this for BCS red/remap images...
+		if (project.equalsIgnoreCase("DES") || imageType.equalsIgnoreCase("coadd")) {
+			if (filterIndex < 0) {
+				System.out
+						.println("Incompatible filter index.  Throwing Exception!");
+				System.out.println("");
+				throw new Exception();
+			}
+		}
+						
+		// set an upper limit separation tolerance for overlaps...
+		if (imageType.equalsIgnoreCase("coadd")) {
+			// for coadd images, 1.5deg is reasonable...
+			sepTolerDeg = 1.5;
+		} else {
+			// for individual CCDs, 0.3deg is reasonable...
+			sepTolerDeg = 0.3;
+		}
 
 		// Establish connection to database
 		if (verbose > 0) {
@@ -86,47 +124,32 @@ public class GlobalZPSolverPrepDC4 {
 		String fullURL = url + dbName;
 		Connection db = DriverManager.getConnection(fullURL, user, passwd);
 
+		if (project.equalsIgnoreCase("BCS")) {
+			raMin = 330.;  //raMin = 50.;
+			raMax = 370.;  //raMax = 100.;
+		}
 		// This query identifies all images of a given imagetype, filter bandpass, 
 		// imagename, and runiddesc.  These images will be looped over later to 
 		// find all unique star matches in the image-to-image overlaps
-		//String query0 = "SELECT * FROM files WHERE imagetype='" + imageType + "' AND " +
-		//		"band='" + filter + "' AND imagename like '" + imageNameFilter + "' AND " +
-		//		"runiddesc='" + runiddesc + "' ORDER BY imageid";
-		
-
-		//For BCS (per CCD solution):
-		//SELECT distinct id, ra, dec FROM image WHERE imagetype='remap' AND 
-		//	band='g' AND imagename like 'BCS%' AND 
-		//	run like '2008%' and project='BCS' and (RA BETWEEN 330. AND 370.) ORDER BY ra, dec;
-		//String query0 = "SELECT DISTINCT ID, RA, DEC, EQUINOX, TILENAME FROM image WHERE imagetype='" + imageType + "' AND " +
-		//		"band='" + filter + "' AND imagename like '" + imageNameFilter + "' AND " +
-		//		"run like '" + run + "' AND project='" + project + "' AND (RA BETWEEN 330 AND 370.) ORDER BY id";
-		String query0;
-		if (project=="BCS") {
-			query0 = "SELECT * FROM image WHERE imagetype='" + imageType + "' AND " +
+		String query0 = "SELECT * FROM image WHERE imagetype='" + imageType + "' AND " +
 				"band like'" + filter + "' AND imagename like '" + imageNameFilter + "' AND " +
-				"run like '" + run + "' AND project='" + project + "' AND (RA BETWEEN 330 AND 370.) ORDER BY id";
-///RA BETWEEN 50 AND 100.)
-		} else {
-			query0 = "SELECT * FROM image WHERE imagetype='" + imageType + "' AND " +
-				"band like'" + filter + "' AND imagename like '" + imageNameFilter + "' AND " +
-				"run like '" + run + "' AND project='" + project + "' ORDER BY id";
-		}
-		
+				"run like '" + run + "' AND project='" + project + "' AND " +
+				"(RA  BETWEEN " + raMin  + " AND " + raMax  + ") AND " +
+				"(DEC BETWEEN " + decMin + " AND " + decMax + ") ORDER BY id";
+				
 		if (verbose > 0) {
 			System.out.println("query0 = " + query0);
 			System.out.println("");
 		}
 
 		// This query finds all unique objects matches in the overlap between two images.
-		// Currently, we only consider coadd tiles, so we use fMatchImages_coadd...
-		//String query1 = "SELECT * FROM table(fMatchImages_coadd( ?, ?, 0.032))"; 
-
-		
-		//For BCS (per CCD solution):
-		//select * from table(fMatchImages( 5058619, 4972386, 0.75, 1.0, 0, 0.032, 'magerr_aper_3', 0.10)); 
-		String query1 = "SELECT * FROM table(fMatchImages( ?, ?, 0.75, 1.0, 0, 0.032, 'magerr_aper_3', 0.10))";
-		
+		// For coadd images, we use fMatchImages_coadd; for red or remap images, we use fMatchImages...
+		String query1;
+		if (imageType.equalsIgnoreCase("coadd")) {
+			query1 = "SELECT * FROM table(fMatchImages_coadd( ?, ?, 0.032))"; 
+		} else {
+			query1 = "SELECT * FROM table(fMatchImages( ?, ?, 0.75, 1.0, 0, 0.032, 'magerr_aper_3', 0.10))";
+		}
 		
 		PreparedStatement st1 = db.prepareStatement(query1);
 		if (verbose > 0) {
@@ -134,14 +157,13 @@ public class GlobalZPSolverPrepDC4 {
 			System.out.println("");
 		}
 		
-		//For BCS (per CCD solution):
+		//For non-coadd queries...
 		String query2 = "SELECT ra,dec FROM objects_all WHERE object_id=?";
 		PreparedStatement st2 = db.prepareStatement(query2);
 		if (verbose > 0) {
 			System.out.println("query2 = " + query2);
 			System.out.println("");
 		}
-		
 		
 		
 		// We want to keep track of the images, their RAs and DECs, and their tilenames...
@@ -250,28 +272,39 @@ public class GlobalZPSolverPrepDC4 {
 			System.out.print("# (1)          (2)        (3)           (4)       (5)        (6)         (7)         (8)       (9)          (10)       (11)         (12)       (13)       (14)        (15)       (16)     (17)       (18)     (19)\n");
 		}
 		
-		//// Coadd:
-		////Generate the names of the fields that we want to extract from the fMatchImages_coadd query...
-		//String magName1    = "MAG_APER3_"+filter+"_1";
-		//String magErrName1 = "MAGERR_APER3_"+filter+"_1";
-		//String flagsName1   = "FLAGS_"+filter+"_1";
-		//String stellarityName1 = "CLASS_STAR_"+filter+"_1";
-		//String magName2    = "MAG_APER3_"+filter+"_2";
-		//String magErrName2 = "MAGERR_APER3_"+filter+"_2";
-		//String flagsName2   = "FLAGS_"+filter+"_2";
-		//String stellarityName2 = "CLASS_STAR_"+filter+"_2";
-
-		//BCS remap
-		//Generate the names of the fields that we want to extract from the fMatchImages query...
-		String magName1    = "MAG_APER_5_1";
-		String magErrName1 = "MAGERR_APER_5_1";
-		String flagsName1   = "FLAGS_1";
-		String stellarityName1 = "CLASS_STAR_1";
-		String magName2    = "MAG_APER_5_2";
-		String magErrName2 = "MAGERR_APER_5_2";
-		String flagsName2   = "FLAGS_2";
-		String stellarityName2 = "CLASS_STAR_2";
-
+		String magName1;
+		String magErrName1;
+		String flagsName1;
+		String stellarityName1;
+		String magName2;
+		String magErrName2;
+		String flagsName2;
+		String stellarityName2;
+		
+		if (imageType.equalsIgnoreCase("coadd")) {
+			//coadd images:
+			//Generate the names of the fields that we want to extract from the fMatchImages_coadd query...
+			magName1    = "MAG_APER5_"+filter+"_1";
+			magErrName1 = "MAGERR_APER5_"+filter+"_1";
+			flagsName1   = "FLAGS_"+filter+"_1";
+			stellarityName1 = "CLASS_STAR_"+filter+"_1";
+			magName2    = "MAG_APER5_"+filter+"_2";
+			magErrName2 = "MAGERR_APER5_"+filter+"_2";
+			flagsName2   = "FLAGS_"+filter+"_2";
+			stellarityName2 = "CLASS_STAR_"+filter+"_2";
+		} else {
+			//red or remap images:
+			//Generate the names of the fields that we want to extract from the fMatchImages query...
+			magName1    = "MAG_APER_5_1";
+			magErrName1 = "MAGERR_APER_5_1";
+			flagsName1   = "FLAGS_1";
+			stellarityName1 = "CLASS_STAR_1";
+			magName2    = "MAG_APER_5_2";
+			magErrName2 = "MAGERR_APER_5_2";
+			flagsName2   = "FLAGS_2";
+			stellarityName2 = "CLASS_STAR_2";
+		}
+		
 		// Loop over all the image pairs...
 		for (int i=0; i<imageidListSize-1; i++) {
 			
@@ -305,29 +338,20 @@ public class GlobalZPSolverPrepDC4 {
 
 				// Calculate the separation in degrees between image i and image j...
 				double sepDeg = this.getSepDeg(ra_i, dec_i, ra_j, dec_j);
-
-//if ( (imageid_i==4972386 && imageid_j==5058619) || (imageid_i==5058619 && imageid_j==4972386) ) {
-	//System.out.println(imageid_i + "\t" + imageid_j + "\t" + sepDeg);
-//}
 				
+				if (verbose > 2) {
+					System.out.println(imageid_i + "\t" + imageid_j + "\t" + sepDeg);
+				}
 				
-				//System.out.println(imageid_i + "\t" + imageid_j + "\t" + sepDeg);
-
-				// If the separation between the two images is greater than 1.5 deg, 
+				// If the separation between the two images is greater than the separation tolerance,  
 				// they should not overlap... skip...
-				//if (sepDeg > 1.5) {
+				if (sepDeg > sepTolerDeg) {
 
-					//System.out.println("    sepDeg = " + sepDeg + " > 1.5 deg...  skipping...");
-
-				if (sepDeg > 0.3) {
-
-						//System.out.println("    sepDeg = " + sepDeg + " > 0.3 deg...  skipping...");
-
+					if (verbose > 2) {
+						System.out.println("    sepDeg = " + sepDeg + " > " + sepTolerDeg + " deg...  skipping...");
+					}
+					
 				} else {
-
-//if ( (imageid_i==4972386 && imageid_j==5058619) || (imageid_i==5058619 && imageid_j==4972386) ) {
-	//System.out.println(imageid_i + "\t" + imageid_j + "\t" + sepDeg);
-//}
 
 					int ntot = 1;
 					// Prepare and then execute query1 for this pair of images...
@@ -338,29 +362,37 @@ public class GlobalZPSolverPrepDC4 {
 					// Loop through the results of query1 for this pair of images...
 					while (rs1.next()) {
 						
-						//DES coadd
-						//int starid_i = rs1.getInt("COADD_OBJECTS_ID_1");
-						//int starid_j = rs1.getInt("COADD_OBJECTS_ID_2");
-						//double starRa_i = rs1.getDouble("ALPHA_J2000_1");
-						//double starDec_i = rs1.getDouble("DELTA_J2000_1");
-						//double starRa_j = rs1.getDouble("ALPHA_J2000_2");
-						//double starDec_j = rs1.getDouble("DELTA_J2000_2");
-						
-						//BCS remap
-						int starid_i = rs1.getInt("OBJECT_ID_1");
-						int starid_j = rs1.getInt("OBJECT_ID_2");
-						st2.setInt(1,starid_i);
-						ResultSet rs2 = st2.executeQuery();
-						rs2.next();
-						double starRa_i = rs2.getDouble("RA");
-						double starDec_i = rs2.getDouble("DEC");
-						rs2.close();
-						st2.setInt(1,starid_j);
-						rs2 = st2.executeQuery();
-						rs2.next();
-						double starRa_j = rs2.getDouble("RA");
-						double starDec_j = rs2.getDouble("DEC");
-						rs2.close();
+						int starid_i;
+						int starid_j;
+						double starRa_i;
+						double starDec_i;
+						double starRa_j;
+						double starDec_j;
+						if (imageType.equalsIgnoreCase("coadd")) {
+						//coadd images:
+							starid_i = rs1.getInt("COADD_OBJECTS_ID_1");
+							starid_j = rs1.getInt("COADD_OBJECTS_ID_2");
+							starRa_i = rs1.getDouble("ALPHA_J2000_1");
+							starDec_i = rs1.getDouble("DELTA_J2000_1");
+							starRa_j = rs1.getDouble("ALPHA_J2000_2");
+							starDec_j = rs1.getDouble("DELTA_J2000_2");
+						} else {
+						//red or remap images:
+							starid_i = rs1.getInt("OBJECT_ID_1");
+							starid_j = rs1.getInt("OBJECT_ID_2");
+							st2.setInt(1,starid_i);
+							ResultSet rs2 = st2.executeQuery();
+							rs2.next();
+							starRa_i = rs2.getDouble("RA");
+							starDec_i = rs2.getDouble("DEC");
+							rs2.close();
+							st2.setInt(1,starid_j);
+							rs2 = st2.executeQuery();
+							rs2.next();
+							starRa_j = rs2.getDouble("RA");
+							starDec_j = rs2.getDouble("DEC");
+							rs2.close();
+						}
 						
 						double mag_i = rs1.getDouble(magName1);
 						double mag_j = rs1.getDouble(magName2);
@@ -403,8 +435,10 @@ public class GlobalZPSolverPrepDC4 {
 			
 			}
 			
-			//System.out.println("");
-		
+			if (verbose > 2) {
+				System.out.println("");
+			}
+			
 		}
 		
 		st1.close();
@@ -698,6 +732,54 @@ public class GlobalZPSolverPrepDC4 {
 
 	public void setProject(String project) {
 		this.project = project;
+	}
+
+	public double getDecMax() {
+		return decMax;
+	}
+
+	public void setDecMax(double decMax) {
+		this.decMax = decMax;
+	}
+
+	public double getDecMin() {
+		return decMin;
+	}
+
+	public void setDecMin(double decMin) {
+		this.decMin = decMin;
+	}
+
+	public double getRaMax() {
+		return raMax;
+	}
+
+	public void setRaMax(double raMax) {
+		this.raMax = raMax;
+	}
+
+	public double getRaMin() {
+		return raMin;
+	}
+
+	public void setRaMin(double raMin) {
+		this.raMin = raMin;
+	}
+
+	public String[] getImageTypeList() {
+		return imageTypeList;
+	}
+
+	public void setImageTypeList(String[] imageTypeList) {
+		this.imageTypeList = imageTypeList;
+	}
+
+	public double getSepTolerDeg() {
+		return sepTolerDeg;
+	}
+
+	public void setSepTolerDeg(double sepTolerDeg) {
+		this.sepTolerDeg = sepTolerDeg;
 	}
 
 }
