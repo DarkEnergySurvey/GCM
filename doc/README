@@ -5,26 +5,37 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
 
    For example:
 
-    (a) on bcs.cosmology.uiuc.edu: 
+    (a) on deslogin.cosmology.illinois.edu: 
         csh:  setenv DESGCM_HOME /home/dtucker/GCM/trunk
         bash: export DESGCM_HOME=/home/dtucker/GCM/trunk
 
     (b) on my Mac OSX laptop:
-        csh:  setenv DESGCM /Users/dtucker/DESDM/GCM/trunk
+        csh:  setenv DESGCM_HOME /Users/dtucker/DESDM/GCM/trunk
         bash: export DESGCM_HOME=/Users/dtucker/DESDM/GCM/trunk
+
+    (c) on des06.fnal.gov:
+        csh:  setenv DESGCM_HOME /data/des06.a/data/dtucker/DESDM/GCM/trunk
+        bash: export DESGCM_HOME=/data/des06.a/data/dtucker/DESDM/GCM/trunk
+
 
 2. Set the JAVA_HOME environment variable to the top level 
    directory of java jdk.
 
    For example: 
 
-    (a) on bcs.cosmology.uiuc.edu:
-        csh:  setenv JAVA_HOME /usr/local/java/jdk1.5.0_11
-        bash: export JAVA_HOME=/usr/local/java/jdk1.5.0_11
+    (a) on deslogin.cosmology.illinois.edu:
+        csh:  setenv JAVA_HOME /home/opt/jdk1.6.0_06
+        bash: export JAVA_HOME=/home/opt/jdk1.6.0_06
 
     (b) on my Mac OSX laptop:
-        csh:  setenv JAVA_HOME /System/Library/Frameworks/JavaVM.framework/Versions/1.5/Home
-        bash: export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.5/Home
+        csh:  setenv JAVA_HOME /System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home
+        bash: export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home
+
+    (c) on des06.fnal.gov:
+        csh:  setenv JAVA_HOME  /usr/java/jdk1.6.0_16
+        bash: export JAVA_HOME= /usr/java/jdk1.6.0_16
+
+
 
 3. Change to the $DESGCM_HOME directory:
        cd $DESGCM_HOME
@@ -39,12 +50,14 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
 
    For example:
 
-    (a) on bcs.cosmology.uiuc.edu:
-        cd /home/dtucker/GCMTests
+    (a) on deslogin.cosmology.illinois.edu:
+        cd /home/dtucker/GCMTests/DC4
 
     (b) on my Mac OSX laptop: 
         cd /Users/dtucker/DESDM/DESDMtests/GCMtests/DC4
 
+    (c) on des06.fnal.gov:
+        cd /data/des06.a/data/dtucker/DESDM/GCMTests/Temp
 
 7. Create a file of unique star matches from the region-to-region overlaps
    (or use an already existing file; see Step 8).
@@ -53,11 +66,11 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
    (replacing "XXXXXXX" and "YYYYYYY" respectively with a correct DES DB username and 
     password):
 
-   java gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverPrepRun jdbc:oracle:thin:@charon.ncsa.uiuc.edu:1521: des XXXXXXX YYYYYYY g 15.0 18.0 coadd "DES%" "DES20070814" GlobalZPSolverPrepGSNlite.txt DES > ./GlobalZPSolverPrepGSNlite.log &
+   java gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverPrepRunDC4 jdbc:oracle:thin:@desdb.cosmology.illinois.edu:1521: des XXXXXXX YYYYYYY g 15.0 18.0 coadd "DES%" "DES20070814" GlobalZPSolverPrepGSNlite.txt DES > ./GlobalZPSolverPrepGSNlite.log &
 
    tail -f output.descoadd.20070814.log   [ctrl-c to escape]
 
-   The arguments for GlobalZPSolverPrepRun are:
+   The arguments for GlobalZPSolverPrepRunDC4 are:
    (1) the URL of the DES Oracle database (jdbc:oracle:thin:@charon.ncsa.uiuc.edu:1521:)
    (2) the database name (des)
    (3) the database username (XXXXXXX)
@@ -71,12 +84,12 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
   (11) the output file name (GlobalZPSolverPrepGSNlite.txt)
   (12) the imageid for the image that is to be used as the reference 
        (not used here; if not specified, the first image found by 
-        GlobalZPSolverPrepRun will be set as the reference image)
-
+        GlobalZPSolverPrepRunDC4 will be set as the reference image)
+  (13) the project name (DES)
 
    Likewise, to create this file for the BCS coadd data from October 10, 2007:
 
-   java gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverPrepRun jdbc:oracle:thin:@charon.ncsa.uiuc.edu:1521: des XXXXXXX YYYYYYY g 15.0 18.0 coadd "BCS%" "BCS20071001" GlobalZPSolverPrepBCS20071001.txt BCS > ./GlobalZPSolverPrepBCS20071001.log &
+   java gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverPrepRunDC4 jdbc:oracle:thin:@desdb.ncsa.illinois.edu:1521: des XXXXXXX YYYYYYY g 15.0 18.0 coadd "BCS%" "BCS20071001" GlobalZPSolverPrepBCS20071001.txt BCS > ./GlobalZPSolverPrepBCS20071001.log &
 
 
    For comparison, versions of GlobalZPSolverPrepGSNlite.txt and 
@@ -85,15 +98,11 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
    GlobalZPSolverPrepBCS20071001.txt in pipeline/trunk/development/GCM/testdata
    has been modified slightly by hand.)
 
-   NOTE:  CURRENTLY GlobalZPSolverPrepRun USES THE STORED PROCEDURE fMatchImages_coadd
-          AND ONLY FINDS MATCHES IN THE OVERLAPS FOR COADD TILES.  A FUTURE VERSION OF 
-          THIS CODE WILL BE MORE FLEXIBLE.
-
-   GlobalZPSolverPrepRun sets a single image to be the reference image (coadd tile) to 
-   which all other images (coadd tiles) will be calibrated.  By default, this image
-   is the first image that GlobalZPSolverPrepRun finds in the database that is of the
+   GlobalZPSolverPrepRunDC4 sets a single image to be the reference image (e.g., a coadd tile) 
+   to which all other images (e.g., coadd tiles) will be calibrated.  By default, this image
+   is the first image that GlobalZPSolverPrepRunDC4 finds in the database that is of the
    correct filter band, image type, image name, and run id, although one may also
-   specify an image as the 12th argument in the GlobalZPSolverPrepRun argument list.
+   specify an image as the 12th argument in the GlobalZPSolverPrepRunDC4 argument list.
    One can also modify the resulting ASCII star match list table by hand, as was
    done for pipeline/trunk/development/GCM/testdata/GlobalZPSolverPrepBCS20071001.txt.
    In this case, you want to edit the regionQuality1 (column 4) and regionQuality2 
@@ -111,7 +120,7 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
    reference image with a regionQuality of 1.  This will make the images in these 
    groups calibrateable. (See Step 8 below.)  
 
-   Run-times for GlobalZPSolverPrepRun using a 1.67GHz PPC Apple PowerBook G4 laptop
+   Run-times for GlobalZPSolverPrepRunDC4 using a 1.67GHz PPC Apple PowerBook G4 laptop
    are about 2 minutes for the GSNlite data and about 15 minutes for the BCS coadd
    data from October 10, 2007.
 
@@ -122,7 +131,7 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
    For example, to run on a simple test case based on Fig. 1 of 
    Glazebrook et al. (1994, MNRAS, 266, 65):
    
-   java -Xmx2048M gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverRun $DESGCM_HOME/testdata/starMatchFile-glazebrook-newformat.txt ./out-starMatchFile-glazebrook-newformat.txt 1 > ./GlobalZPSolverRunGlazebrook.log &
+   java -Xmx1024M gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverRunDC4 $DESGCM_HOME/testdata/starMatchFile-glazebrook-newformat.txt ./out-starMatchFile-glazebrook-newformat.txt 1 > ./GlobalZPSolverRunGlazebrook.log &
 
    The arguments are:
    (1) the input file of unique star matches ($DESGCM_HOME/testdata/starMatchFile-glazebrook-newformat.txt)
@@ -160,9 +169,9 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
    You can also run the GCM zeropoint solver on the star match files created 
    in Step 7 above:
 
-   java -Xmx2048M gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverRun GlobalZPSolverPrepGSNlite.txt out-GlobalZPSolverPrepGSNlite.txt 1 >  ./GlobalZPSolverRunGSNlite.log &
+   java -Xmx1024M gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverRunDC4 GlobalZPSolverPrepGSNlite.txt out-GlobalZPSolverPrepGSNlite.txt 1 >  ./GlobalZPSolverRunGSNlite.log &
 
-   java -Xmx2048M gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverRun GlobalZPSolverPrepBCS20071001.txt out-GlobalZPSolverPrepBCS20071001.txt 1 >  ./GlobalZPSolverRunBCS20071001.log &
+   java -Xmx1024M gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverRunDC4 GlobalZPSolverPrepBCS20071001.txt out-GlobalZPSolverPrepBCS20071001.txt 1 >  ./GlobalZPSolverRunBCS20071001.log &
 
 
    If you have trouble with the versions of GlobalZPSolverPrepGSNlite.txt and
@@ -170,9 +179,9 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
    try the GCM zeropoint solver against the versions of these files that are
    included within pipeline/trunk/development/GCM/testdata.
 
-   java -Xmx2048M gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverRun $DESGCM_HOME/testdata/GlobalZPSolverPrepGSNlite.txt out-GlobalZPSolverPrepGSNlite.txt 1 >  ./GlobalZPSolverRunGSNlite.log &
+   java -Xmx1024M gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverRunDC4 $DESGCM_HOME/testdata/GlobalZPSolverPrepGSNlite.txt out-GlobalZPSolverPrepGSNlite.txt 1 >  ./GlobalZPSolverRunGSNlite.log &
 
-   java -Xmx2048M gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverRun $DESGCM_HOME/testdata/GlobalZPSolverPrepBCS20071001.txt out-GlobalZPSolverPrepBCS20071001.txt 1 >  ./GlobalZPSolverRunBCS20071001.log &
+   java -Xmx1024M gov.fnal.eag.dtucker.desPhotoStds.GlobalZPSolverRunDC4 $DESGCM_HOME/testdata/GlobalZPSolverPrepBCS20071001.txt out-GlobalZPSolverPrepBCS20071001.txt 1 >  ./GlobalZPSolverRunBCS20071001.log &
 
    Note that images lying within disconnected, uncalibrateable "islands" or groups that
    have no regionQuality=1 images in their midst will have their zeropoint offsets set 
@@ -250,7 +259,7 @@ HOW TO RUN THE GLOBAL CALIBRATIONS MODULE (GCM) ZEROPOINT SOLVER OUTSIDE OF OGRE
    the GlobalZPSolver can be re-run. 
 
 
-   Run-times for GlobalZPSolverRun using a 1.67GHz PPC Apple PowerBook G4 laptop
+   Run-times for GlobalZPSolverRunDC4 using a 1.67GHz PPC Apple PowerBook G4 laptop
    are mere seconds for both the GSNlite data the BCS coadd data from October 10, 2007,
    which have relatively small matrices to invert.  For a full blown 5-year DES survey,
    the run-times are on the order of a couple hours.
